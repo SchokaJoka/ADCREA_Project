@@ -504,6 +504,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   gridManager: {fileID: 1676432318}
+  stepDelay: 0.5
+  numPairs: 3
 --- !u!4 &2006833943
 Transform:
   m_ObjectHideFlags: 0

@@ -19,14 +19,25 @@ public class FlowSolver
     {
         var path = new List<Vector2Int>();
         var visited = new bool[gridSize.x, gridSize.y];
-        if (DFS(start, end, visited, path))
+        if (DFS(start, end, visited, path, start, end))
             return path;
         return null;
     }
 
-    private bool DFS(Vector2Int current, Vector2Int end, bool[,] visited, List<Vector2Int> path)
-    {
+    private bool DFS(
+        Vector2Int current,
+        Vector2Int end,
+        bool[,] visited,
+        List<Vector2Int> path,
+        Vector2Int start, 
+        Vector2Int goal
+    ) {
         if (!IsInBounds(current) || visited[current.x, current.y])
+            return false;
+
+        // Skip blocked tiles (unless it's start or end)
+        if (tiles[current.x, current.y].isBlocked 
+            && current != start && current != goal)
             return false;
 
         visited[current.x, current.y] = true;
@@ -35,7 +46,6 @@ public class FlowSolver
         if (current == end)
             return true;
 
-        // Try directions in an order that heads roughly toward bottom-right
         Vector2Int[] dirs = {
             Vector2Int.right,
             Vector2Int.up,
@@ -45,7 +55,7 @@ public class FlowSolver
 
         foreach (var dir in dirs)
         {
-            if (DFS(current + dir, end, visited, path))
+            if (DFS(current + dir, end, visited, path, start, goal))
                 return true;
         }
 
@@ -73,7 +83,6 @@ public class FlowSolver
             Vector2Int.down
         };
 
-        // BFS traversal
         while (queue.Count > 0)
         {
             var curr = queue.Dequeue();
@@ -83,20 +92,22 @@ public class FlowSolver
             foreach (var d in dirs)
             {
                 var next = curr + d;
-                if (IsInBounds(next) && !visited[next.x, next.y])
-                {
-                    visited[next.x, next.y] = true;
-                    parent[next] = curr;
-                    queue.Enqueue(next);
-                }
+                if (!IsInBounds(next) || visited[next.x, next.y])
+                    continue;
+
+                // Skip blocked tiles (unless it's the end)
+                if (tiles[next.x, next.y].isBlocked && next != end)
+                    continue;
+
+                visited[next.x, next.y] = true;
+                parent[next] = curr;
+                queue.Enqueue(next);
             }
         }
 
-        // If end never reached
         if (!parent.ContainsKey(end))
             return null;
 
-        // Reconstruct path from end → start
         var path = new List<Vector2Int>();
         var node = end;
         while (node != start)
@@ -136,11 +147,15 @@ public class FlowSolver
             foreach (var d in dirs)
             {
                 var next = curr + d;
-                if (IsInBounds(next) && !visited[next.x, next.y])
-                {
-                    visited[next.x, next.y] = true;
-                    queue.Enqueue(next);
-                }
+                if (!IsInBounds(next) || visited[next.x, next.y])
+                    continue;
+
+                // Skip blocked tiles
+                if (tiles[next.x, next.y].isBlocked)
+                    continue;
+
+                visited[next.x, next.y] = true;
+                queue.Enqueue(next);
             }
         }
 
