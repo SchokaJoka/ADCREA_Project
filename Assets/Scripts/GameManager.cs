@@ -12,44 +12,91 @@ public struct EndpointPair
 
 public class GameManager : MonoBehaviour
 {
-    [Header("References")]
     public GridManager gridManager;
-
-    [Header("Animation Settings")]
-    [Tooltip("Delay (in seconds) between coloring each tile")]
     public float stepDelay = 0.1f;
-
-    [Header("Random Pairs Settings")]
     public int numPairs = 3;
+
+    //palette
     private readonly List<Color> palette = new List<Color>
-        { Color.red, Color.blue, Color.green, Color.magenta, Color.cyan, Color.yellow };
-
-    private void Start()
     {
-        // 1) Build the visual grid
-        gridManager.GenerateGrid();
-        int W = gridManager.width, H = gridManager.height;
+        Color.red, Color.blue, Color.green, Color.magenta, Color.cyan, Color.yellow
+    };
 
-        // 2) Build the logic grid
-        TileData[,] logicGrid = new TileData[W, H];
+    // State
+    private TileData[,]          logicGrid;
+    private List<EndpointPair>   pairs;
+
+    void Start()
+    {
+        // Initial setup
+        gridManager.GenerateGrid();
+        InitializeLogicGrid();
+        GeneratePairs();
+        PlaceEndpoints();
+    }
+    
+    public void ShufflePairs()
+    {
+        StopAllCoroutines();
+        gridManager.ClearGrid();
+        InitializeLogicGrid();
+        GeneratePairs();
+        PlaceEndpoints();
+    }
+    
+    public void Play()
+    {
+        StopAllCoroutines();
+        StartCoroutine(SolveAllPairsSequentially());
+    }
+    
+    public void ResetGrid()
+    {
+        StopAllCoroutines();
+        gridManager.ClearGrid();
+        InitializeLogicGrid();
+        PlaceEndpoints(); // re-draw the endpoints without re-shuffling
+    }
+    
+    private void InitializeLogicGrid()
+    {
+        int W = gridManager.width, H = gridManager.height;
+        logicGrid = new TileData[W, H];
         for (int x = 0; x < W; x++)
             for (int y = 0; y < H; y++)
                 logicGrid[x, y] = new TileData(new Vector2Int(x, y));
+    }
 
-        // 3) Generate random endpoint pairs (no two endpoints overlap)
-        var used    = new HashSet<Vector2Int>();
-        var pairs   = new List<EndpointPair>();
+    // Randomly pick N non-overlapping pairs
+    private void GeneratePairs()
+    {
+        pairs = new List<EndpointPair>();
+        var used  = new HashSet<Vector2Int>();
+        int W = gridManager.width, H = gridManager.height;
+
         for (int i = 0; i < numPairs; i++)
         {
-            Vector2Int s, e;
+            // pick start
+            Vector2Int s;
             do { s = new Vector2Int(Random.Range(0, W), Random.Range(0, H)); }
             while (!used.Add(s));
+
+            // pick end
+            Vector2Int e;
             do { e = new Vector2Int(Random.Range(0, W), Random.Range(0, H)); }
             while (!used.Add(e));
-            pairs.Add(new EndpointPair { start = s, end = e, color = palette[i] });
-        }
 
-        // 4) **Place all endpoints up front** and reserve them in logicGrid
+            pairs.Add(new EndpointPair {
+                start = s,
+                end   = e,
+                color = palette[i]
+            });
+        }
+    }
+
+    // Draw all endpoints and reserve them in logicGrid
+    private void PlaceEndpoints()
+    {
         foreach (var p in pairs)
         {
             var tS = gridManager.GetTile(p.start);
@@ -60,30 +107,24 @@ public class GameManager : MonoBehaviour
             logicGrid[p.start.x, p.start.y].isBlocked = true;
             logicGrid[p.end.x,   p.end.y  ].isBlocked = true;
         }
-
-        // 5) Now solve/animate each pair in turn
-        StartCoroutine(SolveAllPairsSequentially(pairs, logicGrid, W, H));
     }
 
-    private IEnumerator SolveAllPairsSequentially(
-        List<EndpointPair> pairs,
-        TileData[,] logicGrid,
-        int W, int H
-    ){
+    // Solve & animate each pair in turn
+    private IEnumerator SolveAllPairsSequentially()
+    {
+        int W = gridManager.width, H = gridManager.height;
+
         foreach (var pair in pairs)
         {
-            // a) Solve shortest path around all reserved blocks
             var solver = new FlowSolver(logicGrid, new Vector2Int(W, H));
             var path   = solver.SolveBFS(pair.start, pair.end);
             if (path == null)
             {
-                Debug.LogWarning($"No path found for {pair.color}. Stopping.");
+                Debug.LogWarning($"No path for {pair.color}. Stopping.");
                 yield break;
             }
 
-            Debug.Log($"Animating path for {pair.color}: {path.Count} steps");
-
-            // b) Animate coloring + reserve those tiles
+            Debug.Log($"Animating {pair.color}: {path.Count} steps");
             foreach (var step in path)
             {
                 var tile = gridManager.GetTile(step);
@@ -95,7 +136,7 @@ public class GameManager : MonoBehaviour
                 yield return new WaitForSeconds(stepDelay);
             }
 
-            // c) Brief pause before next
+            // small pause before next color
             yield return new WaitForSeconds(stepDelay * 3);
         }
 
