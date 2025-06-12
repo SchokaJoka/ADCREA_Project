@@ -6,15 +6,16 @@ public class GridManager : MonoBehaviour
     public int width = 5;
     public int height = 5;
     public GameObject tilePrefab;
-    public float spacing = 1.1f;
+    public float spacing = 1f;
 
-    private Tile[,] grid;
+    private Tile[,] _grid;
 
-    public Tile[,] Grid => grid;
+    // Comment: We don't need this???
+    // public Tile[,] grid => _grid;
 
     public void GenerateGrid()
     {
-        grid = new Tile[width, height];
+        _grid = new Tile[width, height];
 
         for (int x = 0; x < width; x++)
         {
@@ -22,10 +23,14 @@ public class GridManager : MonoBehaviour
             {
                 Vector2 position = new Vector2(x * spacing, y * spacing);
                 GameObject tileObj = Instantiate(tilePrefab, position, Quaternion.identity, transform);
+                
                 Tile tile = tileObj.GetComponent<Tile>();
-
                 tile.Init(new Vector2Int(x, y));
-                grid[x, y] = tile;
+                
+                
+                // not real position, but simple position representation in grid
+                // simpler for pathfinding
+                _grid[x, y] = tile;
             }
         }
     }
@@ -34,7 +39,7 @@ public class GridManager : MonoBehaviour
     {
         if (IsInBounds(position))
         {
-            return grid[position.x, position.y];
+            return _grid[position.x, position.y];
         }
 
         return null;
@@ -47,9 +52,9 @@ public class GridManager : MonoBehaviour
 
     public void ClearGrid()
     {
-        if (grid == null) return;
+        if (_grid == null) return;
 
-        foreach (var tile in grid)
+        foreach (Tile tile in _grid)
         {
             tile.Clear();
         }

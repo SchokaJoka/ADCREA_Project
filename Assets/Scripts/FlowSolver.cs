@@ -6,6 +6,7 @@ public class FlowSolver
     private readonly Vector2Int gridSize;
     private readonly TileData[,] tiles;
 
+    // Constructor
     public FlowSolver(TileData[,] tiles, Vector2Int gridSize)
     {
         this.tiles = tiles;
@@ -17,8 +18,8 @@ public class FlowSolver
     // -------------------------------
     public List<Vector2Int> SolveDFS(Vector2Int start, Vector2Int end)
     {
-        var path = new List<Vector2Int>();
-        var visited = new bool[gridSize.x, gridSize.y];
+        List<Vector2Int> path = new List<Vector2Int>();
+        bool[,] visited = new bool[gridSize.x, gridSize.y];
         if (DFS(start, end, visited, path, start, end))
             return path;
         return null;
@@ -53,7 +54,7 @@ public class FlowSolver
             Vector2Int.down
         };
 
-        foreach (var dir in dirs)
+        foreach (Vector2Int dir in dirs)
         {
             if (DFS(current + dir, end, visited, path, start, goal))
                 return true;
@@ -69,9 +70,9 @@ public class FlowSolver
     // -------------------------------
     public List<Vector2Int> SolveBFS(Vector2Int start, Vector2Int end)
     {
-        var queue   = new Queue<Vector2Int>();
-        var visited = new bool[gridSize.x, gridSize.y];
-        var parent  = new Dictionary<Vector2Int, Vector2Int>();
+        Queue<Vector2Int> queue   = new Queue<Vector2Int>();
+        bool[,] visited = new bool[gridSize.x, gridSize.y];
+        Dictionary<Vector2Int, Vector2Int> parent  = new Dictionary<Vector2Int, Vector2Int>();
 
         queue.Enqueue(start);
         visited[start.x, start.y] = true;
@@ -85,13 +86,13 @@ public class FlowSolver
 
         while (queue.Count > 0)
         {
-            var curr = queue.Dequeue();
+            Vector2Int curr = queue.Dequeue();
             if (curr == end)
                 break;
 
-            foreach (var d in dirs)
+            foreach (Vector2Int dir in dirs)
             {
-                var next = curr + d;
+                Vector2Int next = curr + dir;
                 if (!IsInBounds(next) || visited[next.x, next.y])
                     continue;
 
@@ -108,8 +109,8 @@ public class FlowSolver
         if (!parent.ContainsKey(end))
             return null;
 
-        var path = new List<Vector2Int>();
-        var node = end;
+        List<Vector2Int> path = new List<Vector2Int>();
+        Vector2Int node = end;
         while (node != start)
         {
             path.Add(node);
@@ -125,8 +126,8 @@ public class FlowSolver
     // -------------------------------
     public bool IsReachableBFS(Vector2Int start, Vector2Int end)
     {
-        var queue   = new Queue<Vector2Int>();
-        var visited = new bool[gridSize.x, gridSize.y];
+        Queue<Vector2Int> queue   = new Queue<Vector2Int>();
+        bool[,] visited = new bool[gridSize.x, gridSize.y];
 
         queue.Enqueue(start);
         visited[start.x, start.y] = true;
@@ -140,13 +141,13 @@ public class FlowSolver
 
         while (queue.Count > 0)
         {
-            var curr = queue.Dequeue();
+            Vector2Int curr = queue.Dequeue();
             if (curr == end)
                 return true;
 
-            foreach (var d in dirs)
+            foreach (Vector2Int dir in dirs)
             {
-                var next = curr + d;
+                Vector2Int next = curr + dir;
                 if (!IsInBounds(next) || visited[next.x, next.y])
                     continue;
 

@@ -26,7 +26,7 @@ public class GameManager : MonoBehaviour
     };
 
     // State
-    private TileData[,]        logicGrid;
+    private TileData[,] logicGrid;
     private List<EndpointPair> pairs;
 
     void Start()
@@ -77,7 +77,7 @@ public class GameManager : MonoBehaviour
     private void GeneratePairs()
     {
         pairs = new List<EndpointPair>();
-        var used = new HashSet<Vector2Int>();
+        HashSet<Vector2Int> used = new HashSet<Vector2Int>();
         int W = gridManager.width, H = gridManager.height;
 
         for (int i = 0; i < numPairs; i++)
@@ -98,14 +98,14 @@ public class GameManager : MonoBehaviour
 
     private void PlaceEndpoints()
     {
-        foreach (var p in pairs)
+        foreach (EndpointPair pair in pairs)
         {
-            var tS = gridManager.GetTile(p.start);
-            var tE = gridManager.GetTile(p.end);
-            tS.SetAsEndpoint(p.color);
-            tE.SetAsEndpoint(p.color);
-            logicGrid[p.start.x, p.start.y].isBlocked = true;
-            logicGrid[p.end.x,   p.end.y  ].isBlocked = true;
+            Tile tileStart = gridManager.GetTile(pair.start);
+            Tile tileEnd = gridManager.GetTile(pair.end);
+            tileStart.SetAsEndpoint(pair.color);
+            tileEnd.SetAsEndpoint(pair.color);
+            logicGrid[pair.start.x, pair.start.y].isBlocked = true;
+            logicGrid[pair.end.x,   pair.end.y  ].isBlocked = true;
         }
     }
 
@@ -113,14 +113,15 @@ public class GameManager : MonoBehaviour
     {
         int W = gridManager.width, H = gridManager.height;
 
-        foreach (var pair in pairs)
+        foreach (EndpointPair pair in pairs)
         {
             // pick the solver method
-            var solver = new FlowSolver(logicGrid, new Vector2Int(W, H));
+            FlowSolver solver = new FlowSolver(logicGrid, new Vector2Int(W, H));
             List<Vector2Int> path = (method == SolveMethod.DFS)
                 ? solver.SolveDFS(pair.start, pair.end)
                 : solver.SolveBFS(pair.start, pair.end);
-
+            
+            // Check if solver found a path
             if (path == null)
             {
                 Debug.LogWarning($"No path for {pair.color} using {method}. Aborting.");
@@ -129,10 +130,10 @@ public class GameManager : MonoBehaviour
 
             Debug.Log($"{method} path for {pair.color}: {path.Count} steps");
 
-            //animate the path
-            foreach (var step in path)
+            // Path ANIMATION
+            foreach (Vector2Int step in path)
             {
-                var tile = gridManager.GetTile(step);
+                Tile tile = gridManager.GetTile(step);
                 if (tile != null && !tile.IsEndpoint)
                 {
                     tile.SetColor(pair.color);
