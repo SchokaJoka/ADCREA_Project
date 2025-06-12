@@ -7,7 +7,7 @@ public struct EndpointPair
 {
     public Vector2Int start;
     public Vector2Int end;
-    public Color     color;
+    public Material   material;
 }
 
 public enum SolveMethod { DFS, BFS }
@@ -20,10 +20,7 @@ public class GameManager : MonoBehaviour
     
     public SolveMethod method = SolveMethod.BFS;
 
-    private readonly List<Color> palette = new List<Color>
-    {
-        Color.red, Color.blue, Color.green, Color.magenta, Color.cyan, Color.yellow
-    };
+    private List<Material> palette;
 
     // State
     private TileData[,] logicGrid;
@@ -31,6 +28,13 @@ public class GameManager : MonoBehaviour
 
     void Start()
     {
+        palette = new List<Material>
+        {
+            Resources.Load<Material>("Materials/redMat"),
+            Resources.Load<Material>("Materials/blueMat"),
+            Resources.Load<Material>("Materials/greenMat")
+        };
+        
         gridManager.GenerateGrid();
         InitializeLogicGrid();
         GeneratePairs();
@@ -91,7 +95,7 @@ public class GameManager : MonoBehaviour
             pairs.Add(new EndpointPair {
                 start = s,
                 end   = e,
-                color = palette[i]
+                material = palette[i]
             });
         }
     }
@@ -102,8 +106,8 @@ public class GameManager : MonoBehaviour
         {
             Tile tileStart = gridManager.GetTile(pair.start);
             Tile tileEnd = gridManager.GetTile(pair.end);
-            tileStart.SetAsEndpoint(pair.color);
-            tileEnd.SetAsEndpoint(pair.color);
+            tileStart.SetAsEndpoint(pair.material);
+            tileEnd.SetAsEndpoint(pair.material);
             logicGrid[pair.start.x, pair.start.y].isBlocked = true;
             logicGrid[pair.end.x,   pair.end.y  ].isBlocked = true;
         }
@@ -124,11 +128,11 @@ public class GameManager : MonoBehaviour
             // Check if solver found a path
             if (path == null)
             {
-                Debug.LogWarning($"No path for {pair.color} using {method}. Aborting.");
+                Debug.LogWarning($"No path for {pair.material} using {method}. Aborting.");
                 yield break;
             }
 
-            Debug.Log($"{method} path for {pair.color}: {path.Count} steps");
+            Debug.Log($"{method} path for {pair.material}: {path.Count} steps");
 
             // Path ANIMATION
             foreach (Vector2Int step in path)
@@ -136,7 +140,7 @@ public class GameManager : MonoBehaviour
                 Tile tile = gridManager.GetTile(step);
                 if (tile != null && !tile.IsEndpoint)
                 {
-                    tile.SetColor(pair.color);
+                    tile.setMaterial(pair.material);
                     logicGrid[step.x, step.y].isBlocked = true;
                 }
                 yield return new WaitForSeconds(stepDelay);

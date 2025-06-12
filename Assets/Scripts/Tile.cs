@@ -4,17 +4,20 @@ public class Tile : MonoBehaviour
 {
     public Vector2Int GridPosition { get; private set; }
 
-    private SpriteRenderer spriteRenderer;
-    private Color? currentColor = null;
+    private Material defaultMat;
+    
+    private MeshRenderer meshRenderer;
+    private Material? currentMaterial = null;
 
     public bool IsEndpoint { get; private set; }
 
     private void Awake()
     {
-        spriteRenderer = GetComponent<SpriteRenderer>();
-        if (spriteRenderer == null)
+        defaultMat = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+        meshRenderer = GetComponent<MeshRenderer>();
+        if (meshRenderer == null)
         {
-            Debug.LogError("Tile is missing a SpriteRenderer!");
+            Debug.LogError("Tile is missing a MeshRenderer!");
         }
     }
 
@@ -24,50 +27,50 @@ public class Tile : MonoBehaviour
         Clear();
     }
 
-    public void SetAsEndpoint(Color color)
+    public void SetAsEndpoint(Material material)
     {
         IsEndpoint = true;
-        SetColor(color);
+        setMaterial(material);
     }
 
-    /*public void SetColor(Color color)
+    /*public void setMaterial(Color color)
     {
-        currentColor = color;
-        if (spriteRenderer != null)
-            spriteRenderer.color = color;
+        currentMaterial = color;
+        if (meshRenderer != null)
+            meshRenderer.color = color;
     }*/
-    public void SetColor(Color color)
+    public void setMaterial(Material material)
     {
-        currentColor = color;
-        spriteRenderer.color = color;
+        currentMaterial = material;
+        meshRenderer.material = material;
     }
 
-    public void Highlight(Color pathColor)
+    public void Highlight(Material pathMaterial)
     {
         // Only highlight if not already an endpoint
         if (!IsEndpoint)
         {
-            currentColor = pathColor;
-            if (spriteRenderer != null)
-                spriteRenderer.color = pathColor;
+            currentMaterial = pathMaterial;
+            if (meshRenderer != null)
+                meshRenderer.material = pathMaterial;
         }
     }
 
     public void Clear()
     {
         IsEndpoint = false;
-        currentColor = null;
-        if (spriteRenderer != null)
-            spriteRenderer.color = Color.white;
+        currentMaterial = null;
+        if (meshRenderer != null)
+            meshRenderer.material = defaultMat;
     }
 
     public bool IsOccupied()
     {
-        return currentColor != null;
+        return currentMaterial != null;
     }
 
-    public Color? GetColor()
+    public Material? GetMaterial()
     {
-        return currentColor;
+        return currentMaterial;
     }
 }
