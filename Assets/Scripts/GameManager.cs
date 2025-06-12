@@ -1,26 +1,35 @@
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEngine.PlayerLoop;
 
 [System.Serializable]
 public struct EndpointPair
 {
     public Vector2Int start;
     public Vector2Int end;
-    public Material   material;
-}
+    public Material material;
+};
 
-public enum SolveMethod { DFS, BFS }
+public enum SolveMethod 
+{
+    DFS,
+    BFS
+};
+
 
 public class GameManager : MonoBehaviour
 {
     public GridManager gridManager;
-    public float stepDelay = 0.1f;
+    public float stepDelay = 0.05f;
     public int numPairs = 3;
     
     public SolveMethod method = SolveMethod.BFS;
 
     private List<Material> palette;
+    
+    private List<LineRenderer> lineRenderers = new List<LineRenderer>();
+
 
     // State
     private TileData[,] logicGrid;
@@ -45,6 +54,7 @@ public class GameManager : MonoBehaviour
     {
         StopAllCoroutines();
         gridManager.ClearGrid();
+        ClearLines();
         InitializeLogicGrid();
         GeneratePairs();
         PlaceEndpoints();
@@ -60,6 +70,7 @@ public class GameManager : MonoBehaviour
     {
         StopAllCoroutines();
         gridManager.ClearGrid();
+        ClearLines();
         InitializeLogicGrid();
         PlaceEndpoints();
     }
@@ -133,7 +144,35 @@ public class GameManager : MonoBehaviour
             }
 
             Debug.Log($"{method} path for {pair.material}: {path.Count} steps");
+            
+            // Path LINE RENDERER
+            List<Vector3> linePoints = new List<Vector3>();
+            linePoints.Add(new Vector3(
+                pair.start.x * gridManager.spacing, 
+                pair.start.y * gridManager.spacing, 
+                0f
+            ));
+            
+            LineRenderer lineRenderer = new GameObject("PathLine").AddComponent<LineRenderer>();
+            lineRenderer.material = new Material(Shader.Find("Sprites/Default"));
+            lineRenderer.startWidth = 0.7f;
+            lineRenderer.endWidth = 0.7f;
+            lineRenderer.numCornerVertices = 1;
 
+            switch (pair.material.name)
+            {
+                case "redMat":
+                    lineRenderer.material.color = Color.red;
+                    break;
+                case "blueMat":
+                    lineRenderer.material.color = Color.blue;
+                    break;
+                case "greenMat":
+                    lineRenderer.material.color = Color.green;
+                    break;
+            }
+            
+            
             // Path ANIMATION
             foreach (Vector2Int step in path)
             {
@@ -143,10 +182,42 @@ public class GameManager : MonoBehaviour
                     tile.setMaterial(pair.material);
                     logicGrid[step.x, step.y].isBlocked = true;
                 }
+                // Add the step position to the line render list
+                linePoints.Add(new Vector3(
+                    step.x * gridManager.spacing, 
+                    step.y * gridManager.spacing, 
+                    0f
+                ));
+                
+                lineRenderer.positionCount = linePoints.Count;
+                lineRenderer.SetPositions(linePoints.ToArray());
+                lineRenderers.Add(lineRenderer);
                 yield return new WaitForSeconds(stepDelay);
             }
+            
+            linePoints.Add(new Vector3(
+                pair.end.x * gridManager.spacing,
+                pair.end.y * gridManager.spacing, 
+                0f
+            ));
+            
+            lineRenderer.positionCount = linePoints.Count;
+            lineRenderer.SetPositions(linePoints.ToArray());
+            lineRenderers.Add(lineRenderer);
             yield return new WaitForSeconds(stepDelay * 3);
         }
         Debug.Log("All pairs solved!");
+    }
+    
+    private void ClearLines()
+    {
+        if (lineRenderers != null)
+        {
+            foreach (LineRenderer line in lineRenderers)
+            {
+                Destroy(line.gameObject);
+            }
+            lineRenderers.Clear();
+        }
     }
 }
