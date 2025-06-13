@@ -171,4 +171,79 @@ public class FlowSolver
         return pos.x >= 0 && pos.y >= 0
             && pos.x < gridSize.x && pos.y < gridSize.y;
     }
+    
+    // A*
+    public List<Vector2Int> SolveAStar(Vector2Int start, Vector2Int end)
+    {
+        PriorityQueue<Vector2Int> openSet = new PriorityQueue<Vector2Int>();
+        HashSet<Vector2Int> closedSet = new HashSet<Vector2Int>();
+        Dictionary<Vector2Int, Vector2Int> cameFrom = new Dictionary<Vector2Int, Vector2Int>();
+
+        Dictionary<Vector2Int, float> gScore = new Dictionary<Vector2Int, float>();
+        Dictionary<Vector2Int, float> fScore = new Dictionary<Vector2Int, float>();
+
+        openSet.Enqueue(start, 0);
+        gScore[start] = 0f;
+        fScore[start] = Heuristic(start, end);
+
+        while (openSet.Count > 0)
+        {
+            Vector2Int current = openSet.Dequeue();
+
+            if (current == end)
+            {
+                return ReconstructPath(cameFrom, current);
+            }
+
+            closedSet.Add(current);
+
+            Vector2Int[] dirs = {
+                Vector2Int.right, Vector2Int.up,
+                Vector2Int.left,  Vector2Int.down
+            };
+
+            foreach (Vector2Int dir in dirs)
+            {
+                Vector2Int neighbor = current + dir;
+
+                if (!IsInBounds(neighbor) || closedSet.Contains(neighbor))
+                    continue;
+
+                if (tiles[neighbor.x, neighbor.y].isBlocked && neighbor != end)
+                    continue;
+
+                float tentativeGScore = gScore[current] + 1f;
+
+                if (!gScore.ContainsKey(neighbor) || tentativeGScore < gScore[neighbor])
+                {
+                    cameFrom[neighbor] = current;
+                    gScore[neighbor] = tentativeGScore;
+                    fScore[neighbor] = tentativeGScore + Heuristic(neighbor, end);
+
+                    if (!openSet.Contains(neighbor))
+                        openSet.Enqueue(neighbor, fScore[neighbor]);
+                }
+            }
+        }
+
+        return null; // No path found
+    }
+
+    private float Heuristic(Vector2Int a, Vector2Int b)
+    {
+        // Manhattan distance (since movement is 4-directional)
+        return Mathf.Abs(a.x - b.x) + Mathf.Abs(a.y - b.y);
+    }
+
+    private List<Vector2Int> ReconstructPath(Dictionary<Vector2Int, Vector2Int> cameFrom, Vector2Int current)
+    {
+        List<Vector2Int> totalPath = new List<Vector2Int> { current };
+        while (cameFrom.ContainsKey(current))
+        {
+            current = cameFrom[current];
+            totalPath.Insert(0, current);
+        }
+        return totalPath;
+    }
+
 }

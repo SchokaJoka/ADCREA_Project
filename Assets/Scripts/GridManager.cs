@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 public class GridManager : MonoBehaviour
 {
@@ -17,11 +18,15 @@ public class GridManager : MonoBehaviour
     {
         _grid = new Tile[width, height];
 
+        GenerateBackgroundGrid();
+
         for (int x = 0; x < width; x++)
         {
             for (int y = 0; y < height; y++)
             {
-                Vector2 position = new Vector2(x * spacing, y * spacing);
+                float gridOffsetX = (width * spacing) / 2f - spacing / 2f;
+                float gridOffsetY = (height * spacing) / 2f - spacing / 2f;
+                Vector2 position = new Vector2(x * spacing - gridOffsetX, y * spacing - gridOffsetY);
                 GameObject tileObj = Instantiate(tilePrefab, position, Quaternion.identity, transform);
                 
                 Tile tile = tileObj.GetComponent<Tile>();
@@ -59,4 +64,59 @@ public class GridManager : MonoBehaviour
             tile.Clear();
         }
     }
+    
+    public Material gridLineMaterial;
+
+    private List<GameObject> gridLines = new List<GameObject>();
+
+    public void GenerateBackgroundGrid()
+    {
+        ClearBackgroundGrid();
+
+        float gridOffsetX = (width * spacing) / 2f;
+        float gridOffsetY = (height * spacing) / 2f;
+
+        for (int x = 0; x <= width; x++)
+        {
+            Vector3 start = new Vector3(x * spacing - gridOffsetX, 0 - gridOffsetY, 0);
+            Vector3 end   = new Vector3(x * spacing - gridOffsetX, height * spacing - gridOffsetY, 0);
+            CreateLine(start, end);
+        }
+
+        for (int y = 0; y <= height; y++)
+        {
+            Vector3 start = new Vector3(0 - gridOffsetX, y * spacing - gridOffsetY, 0);
+            Vector3 end   = new Vector3(width * spacing - gridOffsetX, y * spacing - gridOffsetY, 0);
+            CreateLine(start, end);
+        }
+    }
+
+
+    private void CreateLine(Vector3 start, Vector3 end)
+    {
+        GameObject line = new GameObject("GridLine");
+        line.transform.parent = this.transform;
+
+        LineRenderer lr = line.AddComponent<LineRenderer>();
+        lr.material = gridLineMaterial;
+        lr.startWidth = 0.05f;
+        lr.endWidth = 0.05f;
+        lr.positionCount = 2;
+        lr.useWorldSpace = false;
+        lr.SetPositions(new Vector3[] { start, end });
+        lr.startColor = Color.gray;
+        lr.endColor = Color.gray;
+
+        gridLines.Add(line);
+    }
+
+    private void ClearBackgroundGrid()
+    {
+        foreach (GameObject line in gridLines)
+        {
+            if (line != null) Destroy(line);
+        }
+        gridLines.Clear();
+    }
+
 }
