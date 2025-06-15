@@ -1737,8 +1737,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c87b972f0dde44bceb4fd0429359ca96, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  width: 10
-  height: 10
+  width: 6
+  height: 6
   tilePrefab: {fileID: 6725684000185420705, guid: 2f6f0f4a3d8451146a25058674986bff, type: 3}
   spacing: 1.5
   gridLineMaterial: {fileID: 2100000, guid: ab212c9acd070ae459bd7dd32acfd01f, type: 2}
@@ -2003,8 +2003,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   gridManager: {fileID: 1676432318}
   stepDelay: 0.5
-  numPairs: 4
+  numPairs: 3
   method: 1
+  pinkMaterial: {fileID: 2100000, guid: 10ce9383d21824921bc6d9638837140a, type: 2}
 --- !u!4 &2006833943
 Transform:
   m_ObjectHideFlags: 0

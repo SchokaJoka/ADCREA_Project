@@ -1,7 +1,7 @@
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
-using UnityEngine.PlayerLoop;
+using UnityEngine.PlayerLoop;  
 
 [System.Serializable]
 public struct EndpointPair
@@ -26,6 +26,8 @@ public class GameManager : MonoBehaviour
     public int numPairs = 3;
     
     public SolveMethod method = SolveMethod.BFS;
+    
+    public Material pinkMaterial;
 
     private List<Material> palette;
     
@@ -126,98 +128,119 @@ public class GameManager : MonoBehaviour
         }
     }
     
-    private IEnumerator SolveAllPairsSequentially()
-{
-    int W = gridManager.width, H = gridManager.height;
-
-    // Grid centering offset (same logic as used in GridManager)
-    float offsetX = (W * gridManager.spacing) / 2f - gridManager.spacing / 2f;
-    float offsetY = (H * gridManager.spacing) / 2f - gridManager.spacing / 2f;
-
-    foreach (EndpointPair pair in pairs)
+   private IEnumerator SolveAllPairsSequentially()
     {
-        FlowSolver solver = new FlowSolver(logicGrid, new Vector2Int(W, H));
-        List<Vector2Int> path = method switch
+        int W = gridManager.width, H = gridManager.height;
+        float offsetX = (W * gridManager.spacing) / 2f - gridManager.spacing / 2f;
+        float offsetY = (H * gridManager.spacing) / 2f - gridManager.spacing / 2f;
+
+        foreach (EndpointPair pair in pairs)
         {
-            SolveMethod.DFS   => solver.SolveDFS(pair.start, pair.end),
-            SolveMethod.BFS   => solver.SolveBFS(pair.start, pair.end),
-            SolveMethod.AStar => solver.SolveAStar(pair.start, pair.end),
-            _ => null
-        };
-
-        if (path == null)
-        {
-            Debug.LogWarning($"No path for {pair.material} using {method}. Aborting.");
-            yield break;
-        }
-
-        Debug.Log($"{method} path for {pair.material}: {path.Count} steps");
-
-        List<Vector3> linePoints = new List<Vector3>();
-        linePoints.Add(new Vector3(
-            pair.start.x * gridManager.spacing - offsetX,
-            pair.start.y * gridManager.spacing - offsetY,
-            0f
-        ));
-
-        LineRenderer lineRenderer = new GameObject("PathLine").AddComponent<LineRenderer>();
-        lineRenderer.material = new Material(Shader.Find("Sprites/Default"));
-        lineRenderer.startWidth = 0.7f;
-        lineRenderer.endWidth = 0.7f;
-        lineRenderer.numCornerVertices = 1;
-
-        switch (pair.material.name)
-        {
-            case "redMat":
-                lineRenderer.material.color = Color.red;
-                break;
-            case "blueMat":
-                lineRenderer.material.color = Color.blue;
-                break;
-            case "greenMat":
-                lineRenderer.material.color = Color.green;
-                break;
-            case "yellowMat":
-                lineRenderer.material.color = Color.yellow;
-                break;
-        }
-
-        foreach (Vector2Int step in path)
-        {
-            Tile tile = gridManager.GetTile(step);
-            if (tile != null && !tile.IsEndpoint)
+            // Solve and collect visited nodes
+            FlowSolver solver = new FlowSolver(logicGrid, new Vector2Int(W, H));
+            List<Vector2Int> visitedNodes = new List<Vector2Int>();
+            List<Vector2Int> path = method switch
             {
-                tile.setMaterial(pair.material);
-                logicGrid[step.x, step.y].isBlocked = true;
+                SolveMethod.DFS   => solver.SolveDFS(pair.start, pair.end, visitedNodes),
+                SolveMethod.BFS   => solver.SolveBFS(pair.start, pair.end, visitedNodes),
+                SolveMethod.AStar => solver.SolveAStar(pair.start, pair.end, visitedNodes),
+                _ => null
+            };
+
+            if (path == null)
+            {
+                Debug.LogWarning($"No path for {pair.material} using {method}. Aborting.");
+                yield break;
             }
 
+            // visualize the search in pink
+            foreach (Vector2Int step in visitedNodes)
+            {
+                Tile tile = gridManager.GetTile(step);
+                if (tile != null && !tile.IsEndpoint)
+                {
+                    tile.Highlight(pinkMaterial);
+                    yield return new WaitForSeconds(stepDelay / 3f);
+                }
+            }
+
+            // Draw the final solution path
+            List<Vector3> linePoints = new List<Vector3>
+            {
+                new Vector3(
+                    pair.start.x * gridManager.spacing - offsetX,
+                    pair.start.y * gridManager.spacing - offsetY,
+                    0f
+                )
+            };
+            LineRenderer lineRenderer = new GameObject("PathLine")
+                .AddComponent<LineRenderer>();
+            lineRenderer.material = new Material(Shader.Find("Sprites/Default"));
+            lineRenderer.startWidth = 0.7f;
+            lineRenderer.endWidth = 0.7f;
+            lineRenderer.numCornerVertices = 1;
+
+            // Match color to endpoint material
+            switch (pair.material.name)
+            {
+                case "redMat":    lineRenderer.material.color = Color.red;    break;
+                case "blueMat":   lineRenderer.material.color = Color.blue;   break;
+                case "greenMat":  lineRenderer.material.color = Color.green;  break;
+                case "yellowMat": lineRenderer.material.color = Color.yellow; break;
+            }
+
+            foreach (Vector2Int step in path)
+            {
+                Tile tile = gridManager.GetTile(step);
+                if (tile != null && !tile.IsEndpoint)
+                {
+                    tile.setMaterial(pair.material);
+                    logicGrid[step.x, step.y].isBlocked = true;
+                }
+
+                linePoints.Add(new Vector3(
+                    step.x * gridManager.spacing - offsetX,
+                    step.y * gridManager.spacing - offsetY,
+                    0f
+                ));
+                lineRenderer.positionCount = linePoints.Count;
+                lineRenderer.SetPositions(linePoints.ToArray());
+                lineRenderers.Add(lineRenderer);
+
+                yield return new WaitForSeconds(stepDelay);
+            }
+
+            // Ensure endpoint is in the line
             linePoints.Add(new Vector3(
-                step.x * gridManager.spacing - offsetX,
-                step.y * gridManager.spacing - offsetY,
+                pair.end.x * gridManager.spacing - offsetX,
+                pair.end.y * gridManager.spacing - offsetY,
                 0f
             ));
-
             lineRenderer.positionCount = linePoints.Count;
             lineRenderer.SetPositions(linePoints.ToArray());
             lineRenderers.Add(lineRenderer);
-            yield return new WaitForSeconds(stepDelay);
+
+            // Pause before cleanup
+            yield return new WaitForSeconds(stepDelay * 3f);
+
+            // reset all pink nodes
+            foreach (Vector2Int step in visitedNodes)
+            {
+                Tile tile = gridManager.GetTile(step);
+                if (tile != null && !tile.IsEndpoint && tile.GetMaterial() == pinkMaterial)
+                {
+                    tile.Clear();
+                }
+            }
+
+            // optional small pause so reset is visible
+            yield return new WaitForSeconds(stepDelay * 1.0f);
         }
 
-        linePoints.Add(new Vector3(
-            pair.end.x * gridManager.spacing - offsetX,
-            pair.end.y * gridManager.spacing - offsetY,
-            0f
-        ));
-
-        lineRenderer.positionCount = linePoints.Count;
-        lineRenderer.SetPositions(linePoints.ToArray());
-        lineRenderers.Add(lineRenderer);
-
-        yield return new WaitForSeconds(stepDelay * 3);
+        Debug.Log("All pairs solved!");
     }
 
-    Debug.Log("All pairs solved!");
-}
+
     private void ClearLines()
     {
         if (lineRenderers != null)
