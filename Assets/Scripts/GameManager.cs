@@ -33,6 +33,7 @@ public class GameManager : MonoBehaviour
     public int numPairs = 3;
     public bool isRunning = false;
     
+    // Time tracking
     private float timeStart = 0f;
     private float timeEnd = 0f;
     
@@ -165,8 +166,10 @@ public class GameManager : MonoBehaviour
     // Main solving coroutine
    private IEnumerator SolveAllPairsSequentially()
    {
+        // Timer reset  
         timeStart = Time.time;
         isRunning = true;
+        
         int W = gridManager.width, H = gridManager.height;
         float offsetX = (W * gridManager.spacing) / 2f - gridManager.spacing / 2f;
         float offsetY = (H * gridManager.spacing) / 2f - gridManager.spacing / 2f;
@@ -298,6 +301,7 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    // Timer update
     void Update()
     {
         if (isRunning)
