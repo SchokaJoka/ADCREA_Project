@@ -87,9 +87,9 @@ public class FlowSolver
         List<Vector2Int> visitedNodes = null
     )
     {
-        var queue = new Queue<Vector2Int>();
+        Queue<Vector2Int> queue = new Queue<Vector2Int>();
         bool[,] visited = new bool[gridSize.x, gridSize.y];
-        var parent = new Dictionary<Vector2Int, Vector2Int>();
+        Dictionary<Vector2Int, Vector2Int> parent = new Dictionary<Vector2Int, Vector2Int>();
 
         queue.Enqueue(start);
         visited[start.x, start.y] = true;
@@ -131,7 +131,7 @@ public class FlowSolver
         if (!parent.ContainsKey(end))
             return null;
 
-        var path = new List<Vector2Int>();
+        List<Vector2Int> path = new List<Vector2Int>();
         Vector2Int node = end;
         while (node != start)
         {
@@ -150,12 +150,12 @@ public class FlowSolver
         List<Vector2Int> visitedNodes = null
     )
     {
-        var openSet = new PriorityQueue<Vector2Int>();
-        var closedSet = new HashSet<Vector2Int>();
-        var cameFrom = new Dictionary<Vector2Int, Vector2Int>();
+        PriorityQueue<Vector2Int> openSet = new PriorityQueue<Vector2Int>();
+        HashSet<Vector2Int> closedSet = new HashSet<Vector2Int>();
+        Dictionary<Vector2Int, Vector2Int> cameFrom = new Dictionary<Vector2Int, Vector2Int>();
 
-        var gScore = new Dictionary<Vector2Int, float>();
-        var fScore = new Dictionary<Vector2Int, float>();
+        Dictionary<Vector2Int, float> gScore = new Dictionary<Vector2Int, float>();
+        Dictionary<Vector2Int, float> fScore = new Dictionary<Vector2Int, float>();
 
         openSet.Enqueue(start, 0);
         gScore[start] = 0f;
