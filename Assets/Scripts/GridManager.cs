@@ -3,17 +3,14 @@ using System.Collections.Generic;
 
 public class GridManager : MonoBehaviour
 {
-    [Header("Grid Settings")]
+    // Grid settings
     public int width = 5;
     public int height = 5;
     public GameObject tilePrefab;
     public float spacing = 1f;
-
     private Tile[,] _grid;
-
-    // Comment: We don't need this???
-    // public Tile[,] grid => _grid;
-
+    
+    // Generate the grid of Spheres
     public void GenerateGrid()
     {
         _grid = new Tile[width, height];
@@ -66,7 +63,6 @@ public class GridManager : MonoBehaviour
     }
     
     public Material gridLineMaterial;
-
     private List<GameObject> gridLines = new List<GameObject>();
 
     public void GenerateBackgroundGrid()

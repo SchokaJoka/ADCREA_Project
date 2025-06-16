@@ -11,6 +11,7 @@ public struct EndpointPair
     public Material material;
 };
 
+// Enum to select the solving method
 public enum SolveMethod 
 {
     DFS,
@@ -21,25 +22,22 @@ public enum SolveMethod
 
 public class GameManager : MonoBehaviour
 {
+    // References and settings
     public GridManager gridManager;
     public float stepDelay = 0.05f;
     public int numPairs = 3;
-    
     public SolveMethod method = SolveMethod.BFS;
-    
     public Material pinkMaterial;
 
-    private List<Material> palette;
-    
-    private List<LineRenderer> lineRenderers = new List<LineRenderer>();
-
-
     // State
+    private List<Material> palette;
+    private List<LineRenderer> lineRenderers = new List<LineRenderer>();
     private TileData[,] logicGrid;
     private List<EndpointPair> pairs;
 
     void Start()
     {
+        // Color palette for pairs
         palette = new List<Material>
         {
             Resources.Load<Material>("Materials/redMat"),
@@ -48,12 +46,14 @@ public class GameManager : MonoBehaviour
             Resources.Load<Material>("Materials/yellowMat")
         };
         
+        // Initialize grid and pairs
         gridManager.GenerateGrid();
         InitializeLogicGrid();
         GeneratePairs();
         PlaceEndpoints();
     }
 
+    // UI Button Handlers
     public void ShufflePairs()
     {
         StopAllCoroutines();
@@ -79,11 +79,12 @@ public class GameManager : MonoBehaviour
         PlaceEndpoints();
     }
 
+    // Change solving method (UI)
     public void OnMethodChanged(int idx)
     {
         method = (SolveMethod)idx;
     }
-
+    
     private void InitializeLogicGrid()
     {
         int W = gridManager.width, H = gridManager.height;
@@ -128,6 +129,7 @@ public class GameManager : MonoBehaviour
         }
     }
     
+    // Main solving coroutine
    private IEnumerator SolveAllPairsSequentially()
     {
         int W = gridManager.width, H = gridManager.height;
@@ -233,14 +235,13 @@ public class GameManager : MonoBehaviour
                 }
             }
 
-            // optional small pause so reset is visible
+            // small pause after reset
             yield return new WaitForSeconds(stepDelay * 1.0f);
         }
 
         Debug.Log("All pairs solved!");
     }
-
-
+   
     private void ClearLines()
     {
         if (lineRenderers != null)

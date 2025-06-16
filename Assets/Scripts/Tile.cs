@@ -5,12 +5,12 @@ public class Tile : MonoBehaviour
     public Vector2Int GridPosition { get; private set; }
 
     private Material defaultMat;
-    
     private MeshRenderer meshRenderer;
     private Material? currentMaterial = null;
 
     public bool IsEndpoint { get; private set; }
-
+    
+    // set default material
     private void Awake()
     {
         defaultMat = new Material(Shader.Find("Universal Render Pipeline/Lit"));
@@ -32,13 +32,7 @@ public class Tile : MonoBehaviour
         IsEndpoint = true;
         setMaterial(material);
     }
-
-    /*public void setMaterial(Color color)
-    {
-        currentMaterial = color;
-        if (meshRenderer != null)
-            meshRenderer.color = color;
-    }*/
+    
     public void setMaterial(Material material)
     {
         currentMaterial = material;
@@ -62,11 +56,6 @@ public class Tile : MonoBehaviour
         currentMaterial = null;
         if (meshRenderer != null)
             meshRenderer.material = defaultMat;
-    }
-
-    public bool IsOccupied()
-    {
-        return currentMaterial != null;
     }
 
     public Material? GetMaterial()

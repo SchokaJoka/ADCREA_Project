@@ -6,11 +6,13 @@ public class PriorityQueue<T>
 
     public int Count => elements.Count;
 
+    // add item with a priority value
     public void Enqueue(T item, float priority)
     {
         elements.Add((item, priority));
     }
 
+    // remove and return item with the lowest priority
     public T Dequeue()
     {
         int bestIndex = 0;
@@ -30,6 +32,7 @@ public class PriorityQueue<T>
         return bestItem;
     }
 
+    // cheks if item is in the queue
     public bool Contains(T item)
     {
         return elements.Exists(e => EqualityComparer<T>.Default.Equals(e.item, item));
