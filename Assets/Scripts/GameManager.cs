@@ -14,6 +14,7 @@ public struct EndpointPair
     public Material material;
 };
 
+// Enum to select the solving method
 public enum SolveMethod 
 {
     DFS,
@@ -24,6 +25,7 @@ public enum SolveMethod
 
 public class GameManager : MonoBehaviour
 {
+    // References and settings
     public GridManager gridManager;
     public GameObject timerObj;
     private TextMeshProUGUI timerText;
@@ -37,6 +39,7 @@ public class GameManager : MonoBehaviour
     public SolveMethod method = SolveMethod.BFS;
 
 
+    // State
     private List<Material> palette;
     private Material pinkMat;
     private Material spritePurpleMat;
@@ -51,6 +54,7 @@ public class GameManager : MonoBehaviour
 
     void Start()
     {
+        // Color palette for pairs
         pinkMat = Resources.Load<Material>("Materials/pinkMat");
         spriteOrangeMat = Resources.Load<Material>("Materials/spriteOrangeMat");
         spritePurpleMat = Resources.Load<Material>("Materials/spritePurpleMat");
@@ -73,12 +77,14 @@ public class GameManager : MonoBehaviour
             Debug.LogError("VisibleTime TextMeshPro component not found!");
         }
         
+        // Initialize grid and pairs
         gridManager.GenerateGrid();
         InitializeLogicGrid();
         GeneratePairs();
         PlaceEndpoints();
     }
 
+    // UI Button Handlers
     public void ShufflePairs()
     {
         StopAllCoroutines();
@@ -106,11 +112,12 @@ public class GameManager : MonoBehaviour
         ResetTimer();
     }
 
+    // Change solving method (UI)
     public void OnMethodChanged(int idx)
     {
         method = (SolveMethod)idx;
     }
-
+    
     private void InitializeLogicGrid()
     {
         int W = gridManager.width, H = gridManager.height;
@@ -155,6 +162,7 @@ public class GameManager : MonoBehaviour
         }
     }
     
+    // Main solving coroutine
    private IEnumerator SolveAllPairsSequentially()
    {
         timeStart = Time.time;
@@ -267,7 +275,7 @@ public class GameManager : MonoBehaviour
                 }
             }
 
-            // optional small pause so reset is visible
+            // small pause after reset
             yield return new WaitForSeconds(stepDelay * 1.0f);
         }
         
@@ -277,8 +285,7 @@ public class GameManager : MonoBehaviour
        
         Debug.Log("All pairs solved!");
     }
-
-
+   
     private void ClearLines()
     {
         if (lineRenderers != null)

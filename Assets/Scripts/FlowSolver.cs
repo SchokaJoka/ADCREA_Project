@@ -3,6 +3,7 @@ using UnityEngine;
 
 public class FlowSolver
 {
+    
     private readonly Vector2Int gridSize;
     private readonly TileData[,] tiles;
 
@@ -13,7 +14,7 @@ public class FlowSolver
         this.gridSize = gridSize;
     }
     
-    //DFS + Backtracking Solver
+    // DFS + Backtracking Solver
     public List<Vector2Int> SolveDFS(Vector2Int start, Vector2Int end, List<Vector2Int> visitedNodes = null)
     {
         bool[,] visited = new bool[gridSize.x, gridSize.y];
@@ -78,10 +79,8 @@ public class FlowSolver
         path.RemoveAt(path.Count - 1);
         return false;
     }
-
-    // -------------------------------
-    // 2) BFS Shortest-Path Solver
-    // -------------------------------
+    
+    // BFS Solver
     public List<Vector2Int> SolveBFS(
         Vector2Int start,
         Vector2Int end,
@@ -106,8 +105,7 @@ public class FlowSolver
         while (queue.Count > 0)
         {
             Vector2Int curr = queue.Dequeue();
-
-            // Optionally record the dequeue as "thinking"
+            
             visitedNodes?.Add(curr);
 
             if (curr == end)
@@ -144,51 +142,8 @@ public class FlowSolver
         path.Reverse();
         return path;
     }
-
-    // -------------------------------
-    // 3) Reachability Check via BFS
-    // -------------------------------
-    public bool IsReachableBFS(Vector2Int start, Vector2Int end)
-    {
-        var queue = new Queue<Vector2Int>();
-        bool[,] visited = new bool[gridSize.x, gridSize.y];
-
-        queue.Enqueue(start);
-        visited[start.x, start.y] = true;
-
-        Vector2Int[] dirs = {
-            Vector2Int.right,
-            Vector2Int.up,
-            Vector2Int.left,
-            Vector2Int.down
-        };
-
-        while (queue.Count > 0)
-        {
-            Vector2Int curr = queue.Dequeue();
-            if (curr == end)
-                return true;
-
-            foreach (Vector2Int dir in dirs)
-            {
-                Vector2Int next = curr + dir;
-                if (!IsInBounds(next) || visited[next.x, next.y])
-                    continue;
-
-                if (tiles[next.x, next.y].isBlocked)
-                    continue;
-
-                visited[next.x, next.y] = true;
-                queue.Enqueue(next);
-            }
-        }
-
-        return false;
-    }
-
-    // -------------------------------
-    // 4) A* Shortest-Path Solver
-    // -------------------------------
+    
+    // A* Solver using heuristic and priority queue
     public List<Vector2Int> SolveAStar(
         Vector2Int start,
         Vector2Int end,
@@ -248,10 +203,10 @@ public class FlowSolver
             }
         }
 
-        return null; // No path found
+        return null;
     }
 
-    // Heuristic for A*
+    // Heuristic function for A* (Manhattan distance)
     private float Heuristic(Vector2Int a, Vector2Int b)
     {
         return Mathf.Abs(a.x - b.x) + Mathf.Abs(a.y - b.y);
@@ -272,7 +227,7 @@ public class FlowSolver
         return totalPath;
     }
 
-    // Helper: check bounds
+    // check bounds
     private bool IsInBounds(Vector2Int pos)
     {
         return pos.x >= 0 && pos.y >= 0
