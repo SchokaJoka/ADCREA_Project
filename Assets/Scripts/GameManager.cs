@@ -1,7 +1,10 @@
+using System;
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
-using UnityEngine.PlayerLoop;  
+using TMPro;
+using UnityEngine.PlayerLoop;
+using Random = UnityEngine.Random;
 
 [System.Serializable]
 public struct EndpointPair
@@ -22,14 +25,22 @@ public enum SolveMethod
 public class GameManager : MonoBehaviour
 {
     public GridManager gridManager;
+    public GameObject timerObj;
+    private TextMeshProUGUI timerText;
     public float stepDelay = 0.05f;
     public int numPairs = 3;
+    public bool isRunning = false;
+    
+    private float timeStart = 0f;
+    private float timeEnd = 0f;
     
     public SolveMethod method = SolveMethod.BFS;
-    
-    public Material pinkMaterial;
+
 
     private List<Material> palette;
+    private Material pinkMat;
+    private Material spritePurpleMat;
+    private Material spriteOrangeMat;
     
     private List<LineRenderer> lineRenderers = new List<LineRenderer>();
 
@@ -40,13 +51,27 @@ public class GameManager : MonoBehaviour
 
     void Start()
     {
+        pinkMat = Resources.Load<Material>("Materials/pinkMat");
+        spriteOrangeMat = Resources.Load<Material>("Materials/spriteOrangeMat");
+        spritePurpleMat = Resources.Load<Material>("Materials/spritePurpleMat");
+        
         palette = new List<Material>
         {
             Resources.Load<Material>("Materials/redMat"),
             Resources.Load<Material>("Materials/blueMat"),
             Resources.Load<Material>("Materials/greenMat"),
-            Resources.Load<Material>("Materials/yellowMat")
+            Resources.Load<Material>("Materials/yellowMat"),
+            Resources.Load<Material>("Materials/orangeMat"),
+            Resources.Load<Material>("Materials/purpleMat"),
+            Resources.Load<Material>("Materials/blackMat"),
+            Resources.Load<Material>("Materials/cyanMat")
         };
+        
+        timerText = timerObj.GetComponent<TextMeshProUGUI>();      
+        if (!timerText)
+        {
+            Debug.LogError("VisibleTime TextMeshPro component not found!");
+        }
         
         gridManager.GenerateGrid();
         InitializeLogicGrid();
@@ -62,6 +87,7 @@ public class GameManager : MonoBehaviour
         InitializeLogicGrid();
         GeneratePairs();
         PlaceEndpoints();
+        ResetTimer();
     }
 
     public void Play()
@@ -77,6 +103,7 @@ public class GameManager : MonoBehaviour
         ClearLines();
         InitializeLogicGrid();
         PlaceEndpoints();
+        ResetTimer();
     }
 
     public void OnMethodChanged(int idx)
@@ -129,7 +156,9 @@ public class GameManager : MonoBehaviour
     }
     
    private IEnumerator SolveAllPairsSequentially()
-    {
+   {
+        timeStart = Time.time;
+        isRunning = true;
         int W = gridManager.width, H = gridManager.height;
         float offsetX = (W * gridManager.spacing) / 2f - gridManager.spacing / 2f;
         float offsetY = (H * gridManager.spacing) / 2f - gridManager.spacing / 2f;
@@ -150,6 +179,7 @@ public class GameManager : MonoBehaviour
             if (path == null)
             {
                 Debug.LogWarning($"No path for {pair.material} using {method}. Aborting.");
+                ResetTimer();
                 yield break;
             }
 
@@ -159,7 +189,7 @@ public class GameManager : MonoBehaviour
                 Tile tile = gridManager.GetTile(step);
                 if (tile != null && !tile.IsEndpoint)
                 {
-                    tile.Highlight(pinkMaterial);
+                    tile.Highlight(pinkMat);
                     yield return new WaitForSeconds(stepDelay / 3f);
                 }
             }
@@ -187,6 +217,10 @@ public class GameManager : MonoBehaviour
                 case "blueMat":   lineRenderer.material.color = Color.blue;   break;
                 case "greenMat":  lineRenderer.material.color = Color.green;  break;
                 case "yellowMat": lineRenderer.material.color = Color.yellow; break;
+                case "blackMat":  lineRenderer.material.color = Color.black; break;
+                case "purpleMat": lineRenderer.material =       spritePurpleMat ; break;
+                case "cyanMat":   lineRenderer.material.color = Color.cyan; break;
+                case "orangeMat": lineRenderer.material =       spriteOrangeMat; break;
             }
 
             foreach (Vector2Int step in path)
@@ -227,7 +261,7 @@ public class GameManager : MonoBehaviour
             foreach (Vector2Int step in visitedNodes)
             {
                 Tile tile = gridManager.GetTile(step);
-                if (tile != null && !tile.IsEndpoint && tile.GetMaterial() == pinkMaterial)
+                if (tile != null && !tile.IsEndpoint && tile.GetMaterial() == pinkMat)
                 {
                     tile.Clear();
                 }
@@ -236,7 +270,11 @@ public class GameManager : MonoBehaviour
             // optional small pause so reset is visible
             yield return new WaitForSeconds(stepDelay * 1.0f);
         }
-
+        
+        // Time tracking
+        isRunning = false;
+        timeEnd = Time.time;
+       
         Debug.Log("All pairs solved!");
     }
 
@@ -251,5 +289,32 @@ public class GameManager : MonoBehaviour
             }
             lineRenderers.Clear();
         }
+    }
+
+    void Update()
+    {
+        if (isRunning)
+        {
+            float elapsedTime = Time.time - timeStart;
+            UpdateTime((float)Math.Round(elapsedTime, 2));
+        }
+        else
+        {
+            float elapsedTime = timeEnd - timeStart;
+            UpdateTime((float)Math.Round(elapsedTime, 2));
+        }
+    }
+
+    private void UpdateTime(float elapsedTime)
+    {
+        timerText.text = elapsedTime + " seconds";
+    }
+
+    private void ResetTimer()
+    {
+        timeStart = 0f;
+        timeEnd = 0f;
+        timerText.text = "0 seconds";
+        isRunning = false;
     }
 }
