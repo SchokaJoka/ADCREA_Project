@@ -2140,7 +2140,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   gridManager: {fileID: 1676432318}
   timerObj: {fileID: 661799336}
-  stepDelay: 0.05
+  stepDelay: 0.1
   numPairs: 5
   isRunning: 0
   method: 1

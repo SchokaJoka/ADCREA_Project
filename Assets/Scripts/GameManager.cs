@@ -29,8 +29,8 @@ public class GameManager : MonoBehaviour
     public GridManager gridManager;
     public GameObject timerObj;
     private TextMeshProUGUI timerText;
-    public float stepDelay = 0.05f;
-    public int numPairs = 3;
+    public float stepDelay = 0.1f;
+    public int numPairs = 5;
     public bool isRunning = false;
     
     // Time tracking

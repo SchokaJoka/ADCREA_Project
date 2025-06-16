@@ -4,8 +4,8 @@ using System.Collections.Generic;
 public class GridManager : MonoBehaviour
 {
     // Grid settings
-    public int width = 5;
-    public int height = 5;
+    public int width = 10;
+    public int height = 10;
     public GameObject tilePrefab;
     public float spacing = 1f;
     private Tile[,] _grid;
